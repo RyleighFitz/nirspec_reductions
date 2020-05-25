@@ -1,4 +1,5 @@
 from collections import defaultdict
+import fitsio
 import numpy as np
 from typing import Dict, Any, List, Union, Callable, Set, Iterable, Iterator, Optional, Tuple
 from dataclasses import dataclass
@@ -8,15 +9,35 @@ from dataclasses import dataclass
 class Image:
     """ Representation of an image, along with metadata. """
 
-    data: np.ndarray
     header: Dict[str, Any]
+    _data: Optional[np.ndarray] = None
+    _filename: Optional[str] = None
 
     @property
     def shape(self) -> Tuple[int]:
         return self.data.shape
 
+    @property
+    def data(self) -> np.ndarray:
+        if self._data is not None:
+            return self._data
+        try:
+            self._data = fitsio.read(self._filename,header=False)
+            return self._data
+        except Exception as e:
+            raise ValueError(f"Unable to load FITS data: {e}")
+
     def metadata(self, *keys: str) -> Tuple[Any]:
         return tuple(self.header.get(key, None) for key in keys)
+
+    @classmethod
+    def load(cls, filename, lazy=True):
+        if lazy:
+            h = fitsio.read_header(filename)
+            return Image(header=h, _data=None, _filename=filename)
+        else:
+            d,h = fitsio.read(filename, header=True)
+            return Image(header=h, _data=d, _filename=filename)
 
 
 class ImageSet:
