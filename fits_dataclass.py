@@ -55,6 +55,9 @@ class ImageSet:
     def __iter__(self) -> Iterator[Image]:
         return iter(self.images)
 
+    def __getitem__(self, item: int) -> Image:
+        return self.images[item]
+
     def __len__(self) -> int:
         return len(self.images)
 
