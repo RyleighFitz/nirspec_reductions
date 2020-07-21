@@ -3,6 +3,7 @@ import fitsio
 import numpy as np
 from typing import Dict, Any, List, Union, Callable, Set, Iterable, Iterator, Optional, Tuple
 from dataclasses import dataclass
+from tqdm import tqdm
 
 
 @dataclass
@@ -79,7 +80,7 @@ class Transform:
     partition_keys: Optional[List[str]] = None
     
 
-    def __call__(self, images: ImageSet) -> ImageSet:
+    def __call__(self, images: ImageSet, show_progress: bool = True) -> ImageSet:
         def partition_value(image: Image):
             if self.partition_keys is not None:
                 return image.metadata(*self.partition_keys)
@@ -97,8 +98,8 @@ class Transform:
                 ignored.append(image)
             else:
                 partition[partition_value(image)].append(image)
-         
-        transformed = [img for _images in partition.values()
+        
+        transformed = [img for _images in tqdm(partition.values())
                            for img in ensure_list(self.transform_op(*_images))]
         
         result = ImageSet(transformed+ignored)
